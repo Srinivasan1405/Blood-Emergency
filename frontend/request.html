@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request Blood — Blood Emergency</title>
+    <meta name="description" content="Submit an urgent blood request. Compatible donors will be alerted immediately." />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .urgency-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--space-md);
+        }
+
+        .urgency-option {
+            position: relative;
+        }
+
+        .urgency-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+        }
+
+        .urgency-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: var(--space-lg);
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+        }
+
+        .urgency-option input:checked+.urgency-label {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: var(--red-600);
+        }
+
+        .urgency-option.normal input:checked+.urgency-label {
+            border-color: var(--color-success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .urgency-option.urgent input:checked+.urgency-label {
+            border-color: var(--color-warning);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .urgency-icon {
+            font-size: 1.6rem;
+        }
+
+        .urgency-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .urgency-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .urgency-label:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 480px) {
+            .urgency-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-card {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .success-overlay {
+            display: none;
+            text-align: center;
+            padding: var(--space-3xl);
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-lg);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a href="index.html" class="navbar-brand"><span class="icon">🩸</span>Blood<span>Emergency</span></a>
+            <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+            <div class="navbar-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="search.html">Find Donors</a>
+                <a href="request.html" class="active">Request Blood</a>
+                <a href="dashboard.html">My Profile</a>
+                <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+                <span id="auth-links" class="flex gap-sm"><a href="login.html">Login</a><a href="register.html"
+                        class="emergency-link">Register</a></span>
+                <span id="user-menu" style="display:none;align-items:center;gap:8px;" class="flex">
+                    <span class="user-name" style="font-size:0.85rem;color:var(--text-secondary)"></span>
+                    <a href="#" onclick="Auth.logout()" class="btn btn-ghost btn-sm">Logout</a>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="form-card">
+                <div class="text-center mb-xl" style="margin-bottom:var(--space-xl);">
+                    <h1 class="page-title">🚨 Request Blood</h1>
+                    <p class="page-subtitle">Fill the form below. Matching donors will be alerted via email and SMS
+                        instantly.</p>
+                </div>
+
+                <!-- Success State -->
+                <div id="success-state" class="card success-overlay">
+                    <div class="success-icon">✅</div>
+                    <h2 style="font-size:1.6rem;margin-bottom:var(--space-md);">Request Submitted!</h2>
+                    <p id="success-message" style="color:var(--text-secondary);margin-bottom:var(--space-xl);"></p>
+                    <div class="flex-center gap-md flex-wrap">
+                        <a href="index.html" class="btn btn-ghost">Back to Home</a>
+                        <button class="btn btn-primary" onclick="resetForm()">Submit Another Request</button>
+                    </div>
+                </div>
+
+                <!-- Request Form -->
+                <div id="form-state">
+                    <div class="card" style="padding:var(--space-2xl);">
+                        <form id="request-form" novalidate>
+
+                            <!-- Section: Patient Info -->
+                            <h3
+                                style="font-size:1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:var(--space-lg);">
+                                Patient Information</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Patient Name <span class="required">*</span></label>
+                                    <input type="text" id="patientName" class="form-control"
+                                        placeholder="Full name of patient" required />
+                                    <span class="form-error" id="patientName-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Blood Group Needed <span class="required">*</span></label>
+                                    <select id="bloodGroup" class="form-control" required>
+                                        <option value="">Select Blood Group</option>
+                                        <option>A+</option>
+                                        <option>A-</option>
+                                        <option>B+</option>
+                                        <option>B-</option>
+                                        <option>AB+</option>
+                                        <option>AB-</option>
+                                        <option>O+</option>
+                                        <option>O-</option>
+                                    </select>
+                                    <span class="form-error" id="bloodGroup-error"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Units Required <span class="required">*</span></label>
+                                <input type="number" id="unitsRequired" class="form-control" min="1" max="20" value="1"
+                                    required style="max-width:160px;" />
+                                <span class="form-error" id="unitsRequired-error"></span>
+                            </div>
+
+                            <!-- Urgency Selector -->
+                            <div class="form-group">
+                                <label class="form-label">Urgency Level <span class="required">*</span></label>
+                                <div class="urgency-selector">
+                                    <div class="urgency-option critical">
+                                        <input type="radio" name="urgency" id="urg-critical" value="critical" />
+                                        <label class="urgency-label" for="urg-critical">
+                                            <span class="urgency-icon">🚨</span>
+                                            <span class="urgency-name">Critical</span>
+                                            <span class="urgency-desc">Life-threatening. Needed within hours.</span>
+                                        </label>
+                                    </div>
+                                    <div class="urgency-option urgent">
+                                        <input type="radio" name="urgency" id="urg-urgent" value="urgent" checked />
+                                        <label class="urgency-label" for="urg-urgent">
+                                            <span class="urgency-icon">⚠️</span>
+                                            <span class="urgency-name">Urgent</span>
+                                            <span class="urgency-desc">Needed within 24 hours.</span>
+                                        </label>
+                                    </div>
+                                    <div class="urgency-option normal">
+                                        <input type="radio" name="urgency" id="urg-normal" value="normal" />
+                                        <label class="urgency-label" for="urg-normal">
+                                            <span class="urgency-icon">📋</span>
+                                            <span class="urgency-name">Normal</span>
+                                            <span class="urgency-desc">Planned surgery or scheduled need.</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Hospital Info -->
+                            <h3
+                                style="font-size:1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:var(--space-xl) 0 var(--space-lg);">
+                                Hospital Information</h3>
+
+                            <div class="form-group">
+                                <label class="form-label">Hospital Name <span class="required">*</span></label>
+                                <input type="text" id="hospitalName" class="form-control"
+                                    placeholder="e.g. Apollo Hospital" required />
+                                <span class="form-error" id="hospitalName-error"></span>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">City <span class="required">*</span></label>
+                                    <input type="text" id="hospitalCity" class="form-control" placeholder="Mumbai"
+                                        required />
+                                    <span class="form-error" id="hospitalCity-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Hospital Address</label>
+                                    <input type="text" id="hospitalAddress" class="form-control"
+                                        placeholder="Street address (optional)" />
+                                </div>
+                            </div>
+
+                            <!-- Section: Contact Info -->
+                            <h3
+                                style="font-size:1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:var(--space-xl) 0 var(--space-lg);">
+                                Contact Information</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Contact Phone <span class="required">*</span></label>
+                                    <input type="tel" id="contactPhone" class="form-control"
+                                        placeholder="+91 98765 43210" required />
+                                    <span class="form-error" id="contactPhone-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Contact Email</label>
+                                    <input type="email" id="contactEmail" class="form-control"
+                                        placeholder="hospital@example.com" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Additional Notes</label>
+                                <textarea id="notes" class="form-control" rows="3"
+                                    placeholder="Any additional information the donor should know..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn">
+                                <span class="btn-text">🚨 Submit Emergency Request</span>
+                            </button>
+
+                            <p
+                                style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:var(--space-md);">
+                                Compatible donors in your city will be notified immediately via email and SMS.
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('request-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearErrors();
+
+            const required = {
+                patientName: 'Patient name is required',
+                bloodGroup: 'Blood group is required',
+                unitsRequired: 'Units required is required',
+                hospitalName: 'Hospital name is required',
+                hospitalCity: 'City is required',
+                contactPhone: 'Contact phone is required',
+            };
+
+            let valid = true;
+            for (const [id, msg] of Object.entries(required)) {
+                if (!document.getElementById(id)?.value?.trim()) {
+                    showFieldError(id, msg);
+                    valid = false;
+                }
+            }
+            if (!valid) return;
+
+            const urgency = document.querySelector('input[name="urgency"]:checked')?.value || 'urgent';
+            const btn = document.getElementById('submit-btn');
+            setButtonLoading(btn, true);
+
+            try {
+                const res = await API.requests.create({
+                    patientName: document.getElementById('patientName').value.trim(),
+                    bloodGroup: document.getElementById('bloodGroup').value,
+                    unitsRequired: parseInt(document.getElementById('unitsRequired').value),
+                    urgency,
+                    hospitalName: document.getElementById('hospitalName').value.trim(),
+                    hospitalCity: document.getElementById('hospitalCity').value.trim(),
+                    hospitalAddress: document.getElementById('hospitalAddress').value.trim(),
+                    contactPhone: document.getElementById('contactPhone').value.trim(),
+                    contactEmail: document.getElementById('contactEmail').value.trim(),
+                    notes: document.getElementById('notes').value.trim(),
+                });
+
+                document.getElementById('success-message').textContent =
+                    `Your request has been submitted. ${res.matchingDonorsFound} compatible donor(s) in the area have been alerted via email and SMS.`;
+                document.getElementById('form-state').style.display = 'none';
+                document.getElementById('success-state').style.display = 'block';
+            } catch (err) {
+                showToast(err.message, 'error', 'Request Failed');
+                setButtonLoading(btn, false);
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('form-state').style.display = 'block';
+            document.getElementById('success-state').style.display = 'none';
+            document.getElementById('request-form').reset();
+            document.getElementById('urg-urgent').checked = true;
+        }
+
+        function showFieldError(id, msg) {
+            document.getElementById(id)?.classList.add('error');
+            const errEl = document.getElementById(`${id}-error`);
+            if (errEl) errEl.textContent = msg;
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+        }
+    </script>
+</body>
+
+</html>

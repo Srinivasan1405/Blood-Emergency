@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blood Emergency Website — Save Lives, Donate Blood</title>
+  <meta name="description" content="Find blood donors near you instantly. Register as a donor and help save lives in emergencies. Blood Emergency Website connects donors and patients 24/7." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+/* Hero Section */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      padding-top: var(--nav-height);
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(185, 28, 28, 0.25) 0%, transparent 65%),
+                  radial-gradient(ellipse 40% 40% at 80% 60%, rgba(120, 0, 0, 0.15) 0%, transparent 60%),
+                  var(--color-bg);
+      z-index: 0;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+    }
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      border-radius: var(--radius-full);
+      color: var(--red-400);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--space-xl);
+    }
+    .hero-title {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      line-height: 1.05;
+      margin-bottom: var(--space-xl);
+      font-family: var(--font-display);
+      font-weight: 900;
+    }
+    .hero-title .highlight {
+      color: var(--red-500);
+      display: block;
+      -webkit-text-stroke: 1px rgba(220, 38, 38, 0.5);
+    }
+    .hero-desc {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2xl);
+      max-width: 560px;
+      line-height: 1.8;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      align-items: center;
+    }
+    .hero-stats {
+      display: flex;
+      gap: var(--space-2xl);
+      margin-top: var(--space-3xl);
+      padding-top: var(--space-2xl);
+      border-top: 1px solid var(--color-border);
+      flex-wrap: wrap;
+    }
+    .hero-stat { text-align: left; }
+    .hero-stat-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: var(--font-display);
+      color: var(--red-400);
+      line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+    
+    @media (max-width: 600px)  { .hero-title { font-size: 2.4rem; } .hero-stats { gap: var(--space-xl); } }
+
+/* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-lg);
+      margin: var(--space-3xl) 0;
+    }
+    .action-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      position: relative;
+      overflow: hidden;
+    }
+    .action-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition-base);
+    }
+    .action-card.red::before    { background: radial-gradient(circle at 50% 0%, rgba(220,38,38,0.2), transparent 70%); }
+    .action-card.blue::before   { background: radial-gradient(circle at 50% 0%, rgba(59,130,246,0.2), transparent 70%); }
+    .action-card.green::before  { background: radial-gradient(circle at 50% 0%, rgba(16,185,129,0.2), transparent 70%); }
+    .action-card.yellow::before { background: radial-gradient(circle at 50% 0%, rgba(245,158,11,0.2), transparent 70%); }
+    .action-card:hover::before  { opacity: 1; }
+    .action-card:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .action-icon { font-size: 2.5rem; margin-bottom: var(--space-md); display: block; }
+    .action-title { font-size: 1.1rem; font-weight: 700; margin-bottom: var(--space-xs); }
+    .action-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+/* Open Requests Section */
+    .requests-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+/* Blood Group Bar */
+    .bg-bars {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-md);
+    }
+    @media (max-width: 600px) { .bg-bars { grid-template-columns: 1fr 1fr; } }
+    .bg-bar-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      text-align: center;
+    }
+    .bg-bar-group { font-size: 1.4rem; font-weight: 800; color: var(--red-400); font-family: var(--font-display); margin-bottom: 4px; }
+    .bg-bar-count { font-size: 0.8rem; color: var(--text-muted); }
+    .bg-bar-fill {
+      height: 4px;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+      margin-top: var(--space-sm);
+      transition: width 1s ease;
+    }
+
+    /*  How it works  */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-xl); }
+    .step-card { text-align: center; position: relative; }
+    .step-number {
+      width: 56px; height: 56px;
+      background: var(--gradient-primary);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; font-family: var(--font-display);
+      color: white;
+      margin: 0 auto var(--space-lg);
+      box-shadow: var(--shadow-glow);
+    }
+    .step-card h3 { font-size: 1.05rem; margin-bottom: var(--space-xs); }
+    .step-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<!--  Emergency Alert Ticker  -->
+<div class="emergency-banner" id="emergency-ticker">
+  <div class="emergency-banner-content">
+    <span class="alert-icon">🚨</span>
+    <span>EMERGENCY BLOOD REQUIRED — O+ blood needed at Apollo Hospital, Mumbai. Contact: 9876543210</span>
+    <span>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+    <span class="alert-icon">🩸</span>
+    <span>AB- blood urgently needed at AIIMS Delhi — Call: 011-26588500</span>
+    <span>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+    <span class="alert-icon">🚨</span>
+    <span>B+ donors needed in Bangalore — Donate today, save a life!</span>
+    <span>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+    <span class="alert-icon">❤️</span>
+    <span>2,341 lives saved this month. Register as a donor now!</span>
+  </div>
+</div>
+
+<!--  Navigation  -->
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="index.html" class="navbar-brand">
+      <span class="icon">🩸</span>
+      Blood<span>Emergency</span>
+    </a>
+
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="navbar-links" id="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="search.html">Find Donors</a>
+      <a href="request.html">Request Blood</a>
+      <a href="dashboard.html">My Profile</a>
+      <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+      <span id="auth-links" class="flex gap-sm">
+        <a href="login.html">Login</a>
+        <a href="register.html" class="emergency-link">Donate Blood</a>
+      </span>
+      <span id="user-menu" style="display:none;align-items:center" class="flex gap-sm">
+        <span class="user-name" style="font-size:0.85rem;color:var(--text-secondary)"></span>
+        <a href="#" onclick="Auth.logout()" class="btn btn-ghost btn-sm">Logout</a>
+      </span>
+    </div>
+  </div>
+</nav>
+
+<!--  Hero Section  -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container">
+    <div class="hero-content slide-up" style="position: relative; z-index: 1;">
+      <div class="hero-label">
+        <span class="live-dot red"></span>
+        Live Emergency Alerts Active
+      </div>
+      <h1 class="hero-title">
+        Every Drop
+        <span class="highlight">Saves a Life</span>
+      </h1>
+      <p class="hero-desc">
+        Connect with blood donors near you in minutes. Our real-time emergency alert system notifies compatible donors instantly when blood is needed.
+      </p>
+      <div class="hero-actions">
+        <a href="register.html" class="btn btn-primary btn-lg glow-btn">
+          🩸 Register as Donor
+        </a>
+        <a href="request.html" class="btn btn-outline btn-lg glow-btn">
+          🚨 Request Blood
+        </a>
+        <a href="search.html" class="btn btn-ghost btn-lg">
+          🔍 Find Donors
+        </a>
+      </div>
+      <div class="hero-stats" style="display: flex; gap: var(--space-xl); margin-top: var(--space-3xl); padding-top: var(--space-2xl); border-top: 1px solid var(--color-border); flex-wrap: wrap;">
+        <div class="hero-stat hover-lift" style="padding: var(--space-lg); background: var(--color-surface); border-radius: var(--radius-lg); flex: 1; min-width: 150px;">
+          <div class="hero-stat-value" id="stat-donors">0</div>
+          <div class="hero-stat-label">Registered Donors</div>
+        </div>
+        <div class="hero-stat hover-lift" style="padding: var(--space-lg); background: var(--color-surface); border-radius: var(--radius-lg); flex: 1; min-width: 150px;">
+          <div class="hero-stat-value" id="stat-saved">0</div>
+          <div class="hero-stat-label">Lives Saved</div>
+        </div>
+        <div class="hero-stat hover-lift" style="padding: var(--space-lg); background: var(--color-surface); border-radius: var(--radius-lg); flex: 1; min-width: 150px;">
+          <div class="hero-stat-value" id="stat-cities">0</div>
+          <div class="hero-stat-label">Cities Covered</div>
+        </div>
+        <div class="hero-stat hover-lift" style="padding: var(--space-lg); background: var(--color-surface); border-radius: var(--radius-lg); flex: 1; min-width: 150px;">
+          <div class="hero-stat-value">24/7</div>
+          <div class="hero-stat-label">Emergency Support</div>
+        </div>
+      </div>
+    </div>
+
+    
+</section>
+
+<!--  Quick Actions  -->
+<section class="section" style="padding-top: var(--space-2xl);">
+  <div class="container">
+    <div class="quick-actions">
+      <a href="register.html" class="action-card red hover-lift glow-btn">
+        <span class="action-icon">🩸</span>
+        <h3 class="action-title">Become a Donor</h3>
+        <p class="action-desc">Register once. Help save many lives. Your blood could be someone's miracle.</p>
+      </a>
+      <a href="request.html" class="action-card blue hover-lift glow-btn">
+        <span class="action-icon">🚑</span>
+        <h3 class="action-title">Request Blood</h3>
+        <p class="action-desc">Submit an emergency blood request. We'll notify compatible donors instantly.</p>
+      </a>
+      <a href="search.html" class="action-card green hover-lift glow-btn">
+        <span class="action-icon">🔍</span>
+        <h3 class="action-title">Search Donors</h3>
+        <p class="action-desc">Find donors by blood group and city. Contact them directly for emergencies.</p>
+      </a>
+      <a href="search.html?type=hospital" class="action-card yellow hover-lift glow-btn">
+        <span class="action-icon">🏥</span>
+        <h3 class="action-title">Find Hospitals</h3>
+        <p class="action-desc">Locate blood banks and hospitals near you with available blood stock.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!--  Open Emergency Requests  -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Active <span>Emergency Requests</span></h2>
+      <a href="request.html" class="btn btn-primary btn-sm">+ New Request</a>
+    </div>
+    <div class="requests-list" id="open-requests">
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <span>Loading emergency requests...</span>
+      </div>
+    </div>
+    <div class="text-center mt-xl">
+      <a href="search.html" class="btn btn-ghost">View All Requests</a>
+    </div>
+  </div>
+</section>
+
+<!--  Blood Group Availability  -->
+<section class="section" style="background: rgba(255,255,255,0.02); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Donor <span>Availability</span></h2>
+      <p class="text-muted text-sm">Available donors by blood group</p>
+    </div>
+    <div class="bg-bars" id="blood-group-bars">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
+<!--  How It Works  -->
+<section class="section">
+  <div class="container">
+    <div class="text-center mb-xl" style="margin-bottom: var(--space-2xl);">
+      <h2 class="section-title" style="font-size: 2rem;">How It <span style="color:var(--red-400)">Works</span></h2>
+      <p class="text-muted">Simple steps to save a life or request help</p>
+    </div>
+    <div class="steps">
+      <div class="step-card fade-in">
+        <div class="step-number">1</div>
+        <h3>Register as Donor</h3>
+        <p>Create your profile with blood group and location. It only takes 2 minutes.</p>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-number">2</div>
+        <h3>Stay Available</h3>
+        <p>Toggle your availability status. You're only contacted when you're available.</p>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-number">3</div>
+        <h3>Get Alerted</h3>
+        <p>Receive instant email & SMS alerts when a compatible patient needs your blood.</p>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-number">4</div>
+        <h3>Save a Life</h3>
+        <p>Contact the hospital and donate. You've made a difference that can never be repaid.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--  Footer  -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="navbar-brand" style="margin-bottom:12px;">
+          <span class="icon" style="font-size:1.4rem;">🩸</span>
+          Blood<span style="color:var(--red-500)">Emergency</span>
+        </div>
+        <p>Connecting blood donors with patients in need. Available 24/7 for emergencies. Every second counts.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <a href="index.html">Home</a>
+        <a href="register.html">Become a Donor</a>
+        <a href="request.html">Request Blood</a>
+        <a href="search.html">Search Donors</a>
+      </div>
+      <div class="footer-col">
+        <h4>Blood Groups</h4>
+        <a href="search.html?bg=A+">A+ Donors</a>
+        <a href="search.html?bg=B+">B+ Donors</a>
+        <a href="search.html?bg=O+">O+ Donors</a>
+        <a href="search.html?bg=AB+">AB+ Donors</a>
+      </div>
+      <div class="footer-col">
+        <h4>Emergency</h4>
+        <a href="tel:102">🚑 Ambulance: 102</a>
+        <a href="tel:108">🏥 Medical: 108</a>
+        <a href="request.html">Submit Request</a>
+        <a href="admin.html">Admin Panel</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2024 Blood Emergency Website. All rights reserved.</span>
+      <span>Made with ❤️ to save lives</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+(async function initHomePage() {
+  //  Animated counter 
+  function animateCount(el, target, duration = 1500) {
+    const start = performance.now();
+    const update = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(eased * target).toLocaleString('en-IN');
+      if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+  }
+
+  //  Load dashboard stats 
+  try {
+    const donorsRes = await API.donors.search({ limit: 1 });
+    const total = donorsRes.total || 0;
+    animateCount(document.getElementById('stat-donors'), total || 1247);
+    animateCount(document.getElementById('stat-saved'), Math.floor((total || 1247) * 1.3));
+    animateCount(document.getElementById('stat-cities'), 48);
+    document.getElementById('float-available').textContent = donorsRes.total || '—';
+  } catch (e) {
+    // Use fallback numbers if API is not running
+    animateCount(document.getElementById('stat-donors'), 1247);
+    animateCount(document.getElementById('stat-saved'), 2341);
+    animateCount(document.getElementById('stat-cities'), 48);
+  }
+
+  //  Load open requests 
+  const requestsContainer = document.getElementById('open-requests');
+  try {
+    const res = await API.requests.getOpen({ limit: 4 });
+    const reqs = res.requests || [];
+    if (reqs.length === 0) {
+      requestsContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">✅</div>
+          <h3>No Active Emergencies</h3>
+          <p>No blood requests right now. Register as a donor to be ready when needed.</p>
+        </div>`;
+      return;
+    }
+    requestsContainer.innerHTML = reqs.map(r => `
+      <div class="request-card ${r.urgency} fade-in">
+        <div class="request-header">
+          <div>
+            <div class="request-patient">
+              ${bloodBadgeHtml(r.bloodGroup, 'sm')}
+              <span style="margin-left:10px;">${r.patientName}</span>
+            </div>
+            <div class="request-meta">
+              🏥 ${r.hospital?.name || 'Unknown Hospital'} — ${r.hospital?.city || ''}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            ${urgencyBadgeHtml(r.urgency)}
+            ${statusBadgeHtml(r.status)}
+          </div>
+        </div>
+        <div class="request-details">
+          <span>🩸 ${r.unitsRequired} unit(s)</span>
+          <span>📞 ${r.contactPhone}</span>
+          <span>🕒 ${timeAgo(r.createdAt)}</span>
+        </div>
+        ${Auth.isLoggedIn() && Auth.getUser()?.role === 'donor' ?
+          `<div class="mt-md">
+             <button class="btn btn-primary btn-sm" onclick="respondToRequest('${r._id}')">I Can Donate</button>
+           </div>` : ''
+        }
+      </div>`).join('');
+  } catch (e) {
+    requestsContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⚡</div>
+        <h3>Could not load requests</h3>
+        <p>Start the backend server to see live emergency requests.</p>
+      </div>`;
+  }
+
+  //  Load blood group availability bars 
+  const barsContainer = document.getElementById('blood-group-bars');
+  try {
+    const statsRes = await API.donors.stats();
+    const stats = statsRes.stats || {};
+    const max = Math.max(...Object.values(stats), 1);
+    barsContainer.innerHTML = Object.entries(stats).map(([group, count]) => `
+      <div class="bg-bar-card">
+        <div class="bg-bar-group">${group}</div>
+        <div class="bg-bar-count">${count} donor${count !== 1 ? 's' : ''}</div>
+        <div class="bg-bar-fill" style="width: ${Math.max((count / max) * 100, 5)}%"></div>
+      </div>`).join('');
+  } catch {
+    const groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    barsContainer.innerHTML = groups.map(g => `
+      <div class="bg-bar-card">
+        <div class="bg-bar-group">${g}</div>
+        <div class="bg-bar-count">Loading...</div>
+        <div class="bg-bar-fill" style="width:50%"></div>
+      </div>`).join('');
+  }
+})();
+
+async function respondToRequest(requestId) {
+  try {
+    const res = await API.requests.respond(requestId);
+    showToast(res.message, 'success', 'Thank you!');
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+</script>
+</body>
+</html>

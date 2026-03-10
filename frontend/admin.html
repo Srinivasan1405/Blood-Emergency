@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard — Blood Emergency</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: calc(100vh - var(--nav-height));
+            gap: 0;
+        }
+
+        .admin-sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid var(--color-border);
+            padding: var(--space-xl);
+            position: sticky;
+            top: var(--nav-height);
+            height: calc(100vh - var(--nav-height));
+            overflow-y: auto;
+        }
+
+        @media (max-width: 900px) {
+            .admin-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-sidebar {
+                position: static;
+                height: auto;
+                display: flex;
+                gap: var(--space-sm);
+                flex-wrap: wrap;
+            }
+        }
+
+        .sidebar-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: var(--space-sm);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: var(--space-xl);
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sidebar-link:hover {
+            background: var(--color-surface);
+            color: var(--text-primary);
+        }
+
+        .sidebar-link.active {
+            background: rgba(220, 38, 38, 0.12);
+            color: var(--red-400);
+            font-weight: 600;
+        }
+
+        .admin-content {
+            padding: var(--space-2xl);
+        }
+
+        .section-tabs {
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            gap: 0;
+            margin-bottom: var(--space-xl);
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all var(--transition-fast);
+        }
+
+        .tab-btn.active {
+            color: var(--red-400);
+            border-bottom-color: var(--red-600);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .action-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a href="index.html" class="navbar-brand"><span class="icon">🩸</span>Blood<span>Emergency</span> <span
+                    style="font-size:0.7rem;background:rgba(220,38,38,0.2);color:var(--red-400);padding:2px 8px;border-radius:4px;margin-left:6px;">Admin</span></a>
+            <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+            <div class="navbar-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="search.html">Find Donors</a>
+                <a href="admin.html" class="active">Admin Panel</a>
+                <a href="#" onclick="Auth.logout()" class="btn btn-ghost btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div style="padding-top:var(--nav-height);">
+        <div class="admin-layout">
+            <!-- Sidebar -->
+            <aside class="admin-sidebar">
+                <div>
+                    <div class="sidebar-title">Dashboard</div>
+                    <div class="sidebar-nav">
+                        <button class="sidebar-link active" onclick="showSection('overview')">📊 Overview</button>
+                        <button class="sidebar-link" onclick="showSection('users')">👥 Users</button>
+                        <button class="sidebar-link" onclick="showSection('requests')">🩸 Blood Requests</button>
+                        <button class="sidebar-link" onclick="showSection('donations')">✅ Donations</button>
+                        <button class="sidebar-link" onclick="showSection('alerts')">📢 Send Alert</button>
+                    </div>
+                    <div class="sidebar-title">Quick Actions</div>
+                    <div class="sidebar-nav">
+                        <a href="request.html" class="sidebar-link">+ New Request</a>
+                        <a href="search.html" class="sidebar-link">🔍 Search Donors</a>
+                        <a href="index.html" class="sidebar-link">🏠 View Site</a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="admin-content">
+
+                <!-- OVERVIEW SECTION -->
+                <section id="section-overview" class="tab-content active">
+                    <h1 class="page-title" style="margin-bottom:var(--space-md);">Dashboard Overview</h1>
+                    <p class="text-muted text-sm mb-lg" style="margin-bottom:var(--space-xl);">Real-time system
+                        statistics</p>
+
+                    <div id="overview-stats" class="stats-grid mb-xl" style="margin-bottom:var(--space-xl);">
+                        <div class="stat-card skeleton" style="height:100px;"></div>
+                        <div class="stat-card skeleton" style="height:100px;"></div>
+                        <div class="stat-card skeleton" style="height:100px;"></div>
+                        <div class="stat-card skeleton" style="height:100px;"></div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xl);">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">📋 Recent Requests</h3>
+                            </div>
+                            <div id="recent-requests-list"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">👤 New Donors</h3>
+                            </div>
+                            <div id="recent-donors-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- USERS SECTION -->
+                <section id="section-users" class="tab-content">
+                    <div class="section-header">
+                        <h2 class="section-title">User <span>Management</span></h2>
+                        <div class="flex gap-sm">
+                            <input type="text" id="user-search" class="form-control"
+                                placeholder="Search name or email..." style="min-width:220px;" />
+                            <select id="user-role-filter" class="form-control" style="width:auto;">
+                                <option value="">All Roles</option>
+                                <option value="donor">Donors</option>
+                                <option value="admin">Admins</option>
+                            </select>
+                            <button class="btn btn-ghost btn-sm" onclick="loadUsers()">Filter</button>
+                        </div>
+                    </div>
+                    <div class="table-container" id="users-table">
+                        <div class="loading-container">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div id="users-pagination" class="pagination"></div>
+                </section>
+
+                <!-- REQUESTS SECTION -->
+                <section id="section-requests" class="tab-content">
+                    <div class="section-header">
+                        <h2 class="section-title">Blood <span>Requests</span></h2>
+                        <div class="flex gap-sm">
+                            <select id="req-status-filter" class="form-control" style="width:auto;">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="fulfilled">Fulfilled</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button class="btn btn-ghost btn-sm" onclick="loadRequests()">Filter</button>
+                        </div>
+                    </div>
+                    <div class="table-container" id="requests-table">
+                        <div class="loading-container">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DONATIONS SECTION -->
+                <section id="section-donations" class="tab-content">
+                    <div class="section-header">
+                        <h2 class="section-title">Donation <span>History</span></h2>
+                    </div>
+                    <div class="table-container" id="donations-table">
+                        <div class="loading-container">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ALERTS SECTION -->
+                <section id="section-alerts" class="tab-content">
+                    <div style="max-width:600px;">
+                        <h2 class="section-title mb-lg" style="margin-bottom:var(--space-lg);">📢 Send Emergency
+                            <span>Alert</span></h2>
+                        <div class="card">
+                            <form id="alert-form">
+                                <div class="form-group">
+                                    <label class="form-label">Alert Subject <span class="required">*</span></label>
+                                    <input type="text" id="alert-subject" class="form-control"
+                                        placeholder="e.g. URGENT: O- Blood Needed at Apollo Hospital" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Message <span class="required">*</span></label>
+                                    <textarea id="alert-message" class="form-control" rows="4"
+                                        placeholder="Write the alert message for donors..." required></textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Target Blood Group</label>
+                                        <select id="alert-bg" class="form-control">
+                                            <option value="">All Blood Groups</option>
+                                            <option>A+</option>
+                                            <option>A-</option>
+                                            <option>B+</option>
+                                            <option>B-</option>
+                                            <option>AB+</option>
+                                            <option>AB-</option>
+                                            <option>O+</option>
+                                            <option>O-</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Target City</label>
+                                        <input type="text" id="alert-city" class="form-control"
+                                            placeholder="Delhi (or leave blank for all)" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label
+                                        style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem;color:var(--text-secondary);">
+                                        <input type="checkbox" id="alert-sms" style="accent-color:var(--red-600);" />
+                                        Also send SMS alerts (simulated)
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full" id="alert-submit-btn">
+                                    <span class="btn-text">📢 Send Alert to Donors</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAdmin();
+
+        let activeSection = 'overview';
+
+        function showSection(name) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(`section-${name}`)?.classList.add('active');
+            event?.target?.classList.add('active');
+            activeSection = name;
+
+            if (name === 'overview') loadOverview();
+            if (name === 'users') loadUsers();
+            if (name === 'requests') loadRequests();
+            if (name === 'donations') loadDonations();
+        }
+
+        //  OVERVIEW 
+        async function loadOverview() {
+            try {
+                const res = await API.admin.dashboard();
+                const s = res.stats;
+
+                document.getElementById('overview-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${s.donors.total}</div><div class="stat-label">Total Donors</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">${s.donors.active}</div><div class="stat-label">Available Now</div></div>
+      <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-value">${s.requests.pending}</div><div class="stat-label">Pending Requests</div></div>
+      <div class="stat-card"><div class="stat-icon">🚨</div><div class="stat-value">${s.requests.critical}</div><div class="stat-label">Critical Requests</div></div>
+      <div class="stat-card"><div class="stat-icon">🩸</div><div class="stat-value">${s.requests.fulfilled}</div><div class="stat-label">Requests Fulfilled</div></div>
+      <div class="stat-card"><div class="stat-icon">💯</div><div class="stat-value">${s.fulfillmentRate}%</div><div class="stat-label">Fulfillment Rate</div></div>
+    `;
+
+                const rr = document.getElementById('recent-requests-list');
+                rr.innerHTML = (res.recentRequests || []).length === 0
+                    ? `<p class="text-muted text-sm">No recent requests.</p>`
+                    : (res.recentRequests || []).map(r => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-border);">
+            <div>
+              <div style="font-size:0.88rem;font-weight:600;">${bloodBadgeHtml(r.bloodGroup, 'sm')} ${r.patientName}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${r.hospital?.name || '—'} · ${timeAgo(r.createdAt)}</div>
+            </div>
+            ${urgencyBadgeHtml(r.urgency)}
+          </div>`).join('');
+
+                const rd = document.getElementById('recent-donors-list');
+                rd.innerHTML = (res.recentDonors || []).length === 0
+                    ? `<p class="text-muted text-sm">No recent donors.</p>`
+                    : (res.recentDonors || []).map(d => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-border);">
+            <div class="donor-avatar" style="width:32px;height:32px;font-size:0.8rem;">${d.name[0]}</div>
+            <div>
+              <div style="font-size:0.88rem;font-weight:600;">${d.name}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${d.bloodGroup} · ${d.location?.city || '—'} · ${timeAgo(d.createdAt)}</div>
+            </div>
+          </div>`).join('');
+            } catch (err) {
+                showToast(err.message, 'error', 'Dashboard Error');
+            }
+        }
+
+        //  USERS 
+        async function loadUsers(page = 1) {
+            const container = document.getElementById('users-table');
+            container.innerHTML = `<div class="loading-container"><div class="spinner"></div></div>`;
+            try {
+                const res = await API.admin.users({
+                    search: document.getElementById('user-search').value,
+                    role: document.getElementById('user-role-filter').value,
+                    page, limit: 15,
+                });
+                const users = res.users || [];
+                if (!users.length) { container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👥</div><h3>No users found</h3></div>`; return; }
+
+                container.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Name</th><th>Email</th><th>Blood Group</th><th>City</th><th>Role</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td><strong>${u.name}</strong></td>
+              <td>${u.email}</td>
+              <td>${u.bloodGroup ? bloodBadgeHtml(u.bloodGroup, 'sm') : '<span class="text-muted">—</span>'}</td>
+              <td>${u.location?.city ? capitalize(u.location.city) : '—'}</td>
+              <td><span class="badge badge-pending">${u.role}</span></td>
+              <td><span class="badge ${u.isActive ? 'badge-fulfilled' : 'badge-unavailable'}">${u.isActive ? 'Active' : 'Inactive'}</span></td>
+              <td>
+                <button class="btn btn-ghost btn-sm" onclick="toggleUserRole('${u._id}','${u.role}')">
+                  ${u.role === 'donor' ? 'Make Admin' : 'Make Donor'}
+                </button>
+                <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="toggleUserStatus('${u._id}',${u.isActive})">
+                  ${u.isActive ? 'Deactivate' : 'Activate'}
+                </button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function toggleUserRole(id, currentRole) {
+            const newRole = currentRole === 'donor' ? 'admin' : 'donor';
+            if (!confirm(`Change role to ${newRole}?`)) return;
+            try {
+                await API.admin.updateUser(id, { role: newRole });
+                showToast(`User role updated to ${newRole}`, 'success');
+                loadUsers();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function toggleUserStatus(id, currentActive) {
+            if (!confirm(`${currentActive ? 'Deactivate' : 'Activate'} this user?`)) return;
+            try {
+                await API.admin.updateUser(id, { isActive: !currentActive });
+                showToast('User status updated', 'success');
+                loadUsers();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        //  REQUESTS 
+        async function loadRequests() {
+            const container = document.getElementById('requests-table');
+            container.innerHTML = `<div class="loading-container"><div class="spinner"></div></div>`;
+            try {
+                const res = await API.admin.dashboard(); // use /requests endpoint
+                const reqRes = await API.requests.getAll({
+                    status: document.getElementById('req-status-filter').value || undefined,
+                    limit: 20,
+                });
+                const reqs = reqRes.requests || [];
+                if (!reqs.length) { container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No requests found</h3></div>`; return; }
+
+                container.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Patient</th><th>Blood Group</th><th>Units</th><th>Urgency</th><th>Hospital</th><th>Status</th><th>Date</th><th>Action</th>
+        </tr></thead>
+        <tbody>
+          ${reqs.map(r => `
+            <tr>
+              <td><strong>${r.patientName}</strong></td>
+              <td>${bloodBadgeHtml(r.bloodGroup, 'sm')}</td>
+              <td>${r.unitsRequired}</td>
+              <td>${urgencyBadgeHtml(r.urgency)}</td>
+              <td style="font-size:0.82rem;">${r.hospital?.name || '—'}<br><span class="text-muted">${r.hospital?.city || ''}</span></td>
+              <td>${statusBadgeHtml(r.status)}</td>
+              <td style="font-size:0.82rem;">${formatDate(r.createdAt)}</td>
+              <td>
+                <select class="form-control" style="padding:4px 8px;font-size:0.8rem;width:auto;" onchange="updateRequestStatus('${r._id}',this.value)">
+                  <option value="">Update…</option>
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="fulfilled">Fulfilled</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function updateRequestStatus(id, status) {
+            if (!status) return;
+            try {
+                await API.requests.update(id, { status });
+                showToast(`Request marked as ${status}`, 'success');
+                loadRequests();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        //  DONATIONS 
+        async function loadDonations() {
+            const container = document.getElementById('donations-table');
+            container.innerHTML = `<div class="loading-container"><div class="spinner"></div></div>`;
+            try {
+                const res = await API.admin.donations({ limit: 20 });
+                const items = res.donations || [];
+                if (!items.length) { container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🩸</div><h3>No donation records</h3></div>`; return; }
+                container.innerHTML = `
+      <table>
+        <thead><tr><th>Donor</th><th>Blood Group</th><th>Units</th><th>Hospital</th><th>Date</th><th>Status</th><th>Certificate</th></tr></thead>
+        <tbody>
+          ${items.map(d => `
+            <tr>
+              <td><strong>${d.donor?.name || '—'}</strong></td>
+              <td>${d.bloodGroup ? bloodBadgeHtml(d.bloodGroup, 'sm') : '—'}</td>
+              <td>${d.unitsDoanted || 1}</td>
+              <td>${d.hospital?.name || '—'}</td>
+              <td>${formatDate(d.donationDate)}</td>
+              <td>${statusBadgeHtml(d.status)}</td>
+              <td style="font-size:0.75rem;color:var(--color-success);">${d.certificateId || '—'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        //  ALERTS 
+        document.getElementById('alert-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('alert-submit-btn');
+            setButtonLoading(btn, true);
+            try {
+                const res = await API.admin.sendAlert({
+                    subject: document.getElementById('alert-subject').value.trim(),
+                    message: document.getElementById('alert-message').value.trim(),
+                    bloodGroup: document.getElementById('alert-bg').value || undefined,
+                    city: document.getElementById('alert-city').value.trim() || undefined,
+                    sendSMS: document.getElementById('alert-sms').checked,
+                });
+                showToast(`✅ Alert sent to ${res.targetDonors} donors (${res.emailsSent} emails, ${res.smsSent} SMS)`, 'success', 'Alerts Dispatched!', 6000);
+                document.getElementById('alert-form').reset();
+            } catch (err) {
+                showToast(err.message, 'error', 'Alert Failed');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        });
+
+        // Initial load
+        loadOverview();
+    </script>
+</body>
+
+</html>

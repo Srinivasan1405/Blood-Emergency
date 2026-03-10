@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Blood Donors — Blood Emergency</title>
+    <meta name="description"
+        content="Search for blood donors by blood group and city. Find compatible donors near you instantly." />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a href="index.html" class="navbar-brand"><span class="icon">🩸</span>Blood<span>Emergency</span></a>
+            <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+            <div class="navbar-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="search.html" class="active">Find Donors</a>
+                <a href="request.html">Request Blood</a>
+                <a href="dashboard.html">My Profile</a>
+                <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+                <span id="auth-links" class="flex gap-sm"><a href="login.html">Login</a><a href="register.html"
+                        class="emergency-link">Register</a></span>
+                <span id="user-menu" style="display:none;align-items:center;gap:8px;" class="flex">
+                    <span class="user-name" style="font-size:0.85rem;color:var(--text-secondary)"></span>
+                    <a href="#" onclick="Auth.logout()" class="btn btn-ghost btn-sm">Logout</a>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="text-center mb-xl" style="margin-bottom:var(--space-xl);">
+                <h1 class="page-title">🔍 Find Blood Donors</h1>
+                <p class="page-subtitle">Search by blood group and city to find available donors near you.</p>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="card mb-xl" style="margin-bottom:var(--space-xl);padding:var(--space-xl);">
+                <div class="filter-bar">
+                    <select id="filter-bg" class="form-control">
+                        <option value="">All Blood Groups</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                    </select>
+                    <input type="text" id="filter-city" class="form-control" placeholder="🏙️ Search by city..." />
+                    <button id="search-btn" class="btn btn-primary">🔍 Search Donors</button>
+                    <button id="clear-btn" class="btn btn-ghost" onclick="clearSearch()">Clear</button>
+                </div>
+
+                <!-- Results summary -->
+                <div id="results-summary"
+                    style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--space-md);display:none;">
+                    Found <strong id="results-count" style="color:var(--text-primary);">0</strong> donors
+                    <span id="results-filter-desc"></span>
+                </div>
+            </div>
+
+            <!-- Blood Group Quick Filters -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--space-xl);" id="quick-filters">
+                <span style="font-size:0.85rem;color:var(--text-muted);align-self:center;">Quick filter:</span>
+                <button class="btn btn-ghost btn-sm" onclick="quickSearch('O-')">🅾️ O-</button>
+                <button class="btn btn-ghost btn-sm" onclick="quickSearch('O+')">🅾️ O+</button>
+                <button class="btn btn-ghost btn-sm" onclick="quickSearch('A+')">🅰️ A+</button>
+                <button class="btn btn-ghost btn-sm" onclick="quickSearch('B+')">🅱️ B+</button>
+                <button class="btn btn-ghost btn-sm" onclick="quickSearch('AB+')">🆎 AB+</button>
+            </div>
+
+            <!-- Results Grid -->
+            <div id="donors-grid" class="donor-grid">
+                <div class="loading-container" style="grid-column:1/-1;">
+                    <div class="spinner"></div>
+                    <span>Loading donors...</span>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="pagination" style="display:none;"></div>
+
+            <!-- Open Requests Section -->
+            <div style="margin-top:var(--space-3xl);">
+                <div class="section-header">
+                    <h2 class="section-title">Open Blood <span>Requests</span></h2>
+                    <a href="request.html" class="btn btn-primary btn-sm">+ Submit Request</a>
+                </div>
+                <div id="open-requests-list">
+                    <div class="loading-container">
+                        <div class="spinner"></div><span>Loading requests...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let currentPage = 1;
+        const LIMIT = 12;
+
+        // Auto-read URL params (e.g. ?bg=O+ from homepage link)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('bg')) document.getElementById('filter-bg').value = urlParams.get('bg');
+        if (urlParams.get('city')) document.getElementById('filter-city').value = urlParams.get('city');
+
+        async function searchDonors(page = 1) {
+            currentPage = page;
+            const bg = document.getElementById('filter-bg').value;
+            const city = document.getElementById('filter-city').value.trim();
+            const grid = document.getElementById('donors-grid');
+
+            grid.innerHTML = `<div class="loading-container" style="grid-column:1/-1;"><div class="spinner"></div><span>Searching...</span></div>`;
+
+            try {
+                const res = await API.donors.search({ bloodGroup: bg || undefined, city: city || undefined, page, limit: LIMIT });
+                const donors = res.donors || [];
+                const total = res.total || 0;
+                const totalPages = res.totalPages || 1;
+
+                // Summary
+                const summary = document.getElementById('results-summary');
+                summary.style.display = 'block';
+                document.getElementById('results-count').textContent = total;
+                const parts = [];
+                if (bg) parts.push(`blood group <strong style="color:var(--red-400)">${bg}</strong>`);
+                if (city) parts.push(`in <strong style="color:var(--text-primary)">${city}</strong>`);
+                document.getElementById('results-filter-desc').innerHTML = parts.length ? ` matching ${parts.join(' ')}` : '';
+
+                if (donors.length === 0) {
+                    grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-state-icon">🔍</div>
+            <h3>No Donors Found</h3>
+            <p>Try different blood group or city, or <a href="register.html" style="color:var(--red-400)">register as a donor</a> to help others.</p>
+          </div>`;
+                    document.getElementById('pagination').style.display = 'none';
+                    return;
+                }
+
+                grid.innerHTML = donors.map(d => {
+                    const city = d.location?.city ? capitalize(d.location.city) : '—';
+                    const state = d.location?.state ? `, ${capitalize(d.location.state)}` : '';
+                    const initials = d.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    return `
+          <div class="donor-card fade-in">
+            <div class="donor-card-header">
+              <div class="donor-avatar">${initials}</div>
+              <div class="donor-info">
+                <div class="donor-name">${d.name}</div>
+                <div class="donor-location">📍 ${city}${state}</div>
+              </div>
+              ${bloodBadgeHtml(d.bloodGroup)}
+            </div>
+            <div class="donor-detail-row">
+              <span>🩸 Donations</span>
+              <strong>${d.totalDonations || 0}</strong>
+            </div>
+            <div class="donor-detail-row">
+              <span>📅 Last Donated</span>
+              <strong>${d.lastDonationDate ? timeAgo(d.lastDonationDate) : 'Never'}</strong>
+            </div>
+            <div class="donor-detail-row">
+              <span>🕒 Registered</span>
+              <strong>${timeAgo(d.createdAt)}</strong>
+            </div>
+            <div class="donor-card-footer">
+              <span class="badge ${d.isAvailable ? 'badge-available' : 'badge-unavailable'}">
+                ${d.isAvailable ? '✅ Available' : '⏸️ Unavailable'}
+              </span>
+              ${d.phone && d.isAvailable
+                            ? `<a href="tel:${d.phone}" class="btn btn-primary btn-sm">📞 Call</a>`
+                            : `<button class="btn btn-ghost btn-sm" disabled>Not Available</button>`
+                        }
+            </div>
+          </div>`;
+                }).join('');
+
+                // Pagination
+                renderPagination(page, totalPages);
+            } catch (err) {
+                grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <div class="empty-state-icon">⚡</div>
+          <h3>Could not load donors</h3>
+          <p>${err.message}</p>
+        </div>`;
+            }
+        }
+
+        function renderPagination(current, total) {
+            const pg = document.getElementById('pagination');
+            if (total <= 1) { pg.style.display = 'none'; return; }
+            pg.style.display = 'flex';
+
+            let html = `<button class="pagination-btn" onclick="searchDonors(${current - 1})" ${current === 1 ? 'disabled' : ''}>←</button>`;
+            for (let i = 1; i <= Math.min(total, 7); i++) {
+                html += `<button class="pagination-btn ${i === current ? 'active' : ''}" onclick="searchDonors(${i})">${i}</button>`;
+            }
+            html += `<button class="pagination-btn" onclick="searchDonors(${current + 1})" ${current === total ? 'disabled' : ''}>→</button>`;
+            pg.innerHTML = html;
+        }
+
+        function quickSearch(bg) {
+            document.getElementById('filter-bg').value = bg;
+            searchDonors(1);
+        }
+
+        function clearSearch() {
+            document.getElementById('filter-bg').value = '';
+            document.getElementById('filter-city').value = '';
+            searchDonors(1);
+        }
+
+        // Load open requests
+        async function loadOpenRequests() {
+            const container = document.getElementById('open-requests-list');
+            try {
+                const res = await API.requests.getOpen({ limit: 6 });
+                const reqs = res.requests || [];
+                if (reqs.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><h3>No open requests</h3></div>`;
+                    return;
+                }
+                container.innerHTML = `<div style="display:flex;flex-direction:column;gap:var(--space-md);">` +
+                    reqs.map(r => `
+          <div class="request-card ${r.urgency} fade-in">
+            <div class="request-header">
+              <div>
+                <div class="request-patient">${bloodBadgeHtml(r.bloodGroup, 'sm')} <span style="margin-left:8px;">${r.patientName}</span></div>
+                <div class="request-meta">🏥 ${r.hospital?.name}, ${r.hospital?.city || ''}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                ${urgencyBadgeHtml(r.urgency)}
+                ${statusBadgeHtml(r.status)}
+              </div>
+            </div>
+            <div class="request-details">
+              <span>🩸 ${r.unitsRequired} unit(s)</span>
+              <span>📞 ${r.contactPhone}</span>
+              <span>🕒 ${timeAgo(r.createdAt)}</span>
+            </div>
+            ${Auth.isLoggedIn() && Auth.getUser()?.role === 'donor'
+                            ? `<div class="mt-md"><button class="btn btn-primary btn-sm" onclick="respond('${r._id}')">I Can Donate</button></div>` : ''
+                        }
+          </div>`).join('') + `</div>`;
+            } catch {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚡</div><h3>Could not load requests</h3></div>`;
+            }
+        }
+
+        async function respond(id) {
+            try {
+                const res = await API.requests.respond(id);
+                showToast(res.message, 'success', 'Thank you!');
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        // Event listeners
+        document.getElementById('search-btn').addEventListener('click', () => searchDonors(1));
+        document.getElementById('filter-city').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchDonors(1); });
+        document.getElementById('filter-bg').addEventListener('change', () => searchDonors(1));
+
+        // Initial load
+        searchDonors(1);
+        loadOpenRequests();
+    </script>
+</body>
+
+</html>

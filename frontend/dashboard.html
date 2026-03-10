@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Dashboard — Blood Emergency</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, rgba(185, 28, 28, 0.15) 0%, rgba(0, 0, 0, 0) 60%);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+            flex-wrap: wrap;
+        }
+
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-glow);
+            border: 3px solid rgba(220, 38, 38, 0.4);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            font-family: var(--font-display);
+        }
+
+        .profile-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-md);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: var(--space-xl);
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .availability-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-lg);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-xl);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            transition: all 0.3s;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked+.toggle-slider {
+            background: var(--color-success);
+        }
+
+        input:checked+.toggle-slider::before {
+            transform: translateX(24px);
+        }
+
+        .toggle-label {
+            flex: 1;
+        }
+
+        .toggle-label strong {
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .toggle-label span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a href="index.html" class="navbar-brand"><span class="icon">🩸</span>Blood<span>Emergency</span></a>
+            <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+            <div class="navbar-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="search.html">Find Donors</a>
+                <a href="request.html">Request Blood</a>
+                <a href="dashboard.html" class="active">My Profile</a>
+                <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+                <span id="user-menu" style="display:none;align-items:center;gap:8px;" class="flex">
+                    <span class="user-name" style="font-size:0.85rem;color:var(--text-secondary)"></span>
+                    <a href="#" onclick="Auth.logout()" class="btn btn-ghost btn-sm">Logout</a>
+                </span>
+                <span id="auth-links" class="flex gap-sm">
+                    <a href="login.html">Login</a>
+                    <a href="register.html" class="emergency-link">Register</a>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-content">
+        <div class="container">
+            <div id="dashboard-wrapper">
+                <div class="loading-container">
+                    <div class="spinner"></div><span>Loading your dashboard...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+
+        async function loadDashboard() {
+            try {
+                const res = await API.auth.me();
+                const user = res.user;
+                Auth.setUser(user);
+
+                const histRes = await API.donors.history(user._id);
+                const history = histRes.history || [];
+
+                const threeMonthsAgo = new Date();
+                threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                const canDonate = !user.lastDonationDate || new Date(user.lastDonationDate) <= threeMonthsAgo;
+
+                document.getElementById('dashboard-wrapper').innerHTML = `
+      <!-- Profile Header -->
+      <div class="profile-header fade-in">
+        <div class="profile-avatar">${user.name.charAt(0).toUpperCase()}</div>
+        <div class="profile-info">
+          <div class="profile-name">${user.name}</div>
+          <div class="profile-meta">📧 ${user.email} ${user.phone ? '&nbsp;|&nbsp; 📞 ' + user.phone : ''} ${user.location?.city ? '&nbsp;|&nbsp; 📍 ' + capitalize(user.location.city) : ''}</div>
+          <div class="profile-badges">
+            ${bloodBadgeHtml(user.bloodGroup || '—')}
+            <span class="badge ${user.isAvailable ? 'badge-available' : 'badge-unavailable'}">
+              ${user.isAvailable ? '✅ Available to Donate' : '⏸️ Unavailable'}
+            </span>
+            <span class="badge badge-pending">${capitalize(user.role)}</span>
+            ${canDonate ? '<span class="badge badge-fulfilled">✓ Eligible to Donate</span>' : '<span class="badge badge-unavailable">3-month wait period</span>'}
+          </div>
+        </div>
+        <div>
+          <a href="#edit-profile" class="btn btn-ghost btn-sm">✏️ Edit Profile</a>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-grid mb-xl" style="margin-bottom:var(--space-xl);">
+        <div class="stat-card">
+          <div class="stat-icon">🩸</div>
+          <div class="stat-value">${user.totalDonations || 0}</div>
+          <div class="stat-label">Total Donations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value">${user.lastDonationDate ? formatDate(user.lastDonationDate) : 'Never'}</div>
+          <div class="stat-label">Last Donation</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏅</div>
+          <div class="stat-value">${history.filter(h => h.status === 'completed').length}</div>
+          <div class="stat-label">Lives Helped</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📍</div>
+          <div class="stat-value">${user.location?.city ? capitalize(user.location.city) : '—'}</div>
+          <div class="stat-label">Your City</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Left Column: Profile + Availability -->
+        <div>
+          <!-- Availability Toggle -->
+          <div class="availability-toggle">
+            <label class="toggle-switch">
+              <input type="checkbox" id="avail-toggle" ${user.isAvailable ? 'checked' : ''} onchange="toggleAvailability(this)" />
+              <span class="toggle-slider"></span>
+            </label>
+            <div class="toggle-label">
+              <strong id="avail-label">${user.isAvailable ? 'Available to Donate' : 'Currently Unavailable'}</strong>
+              <span>Toggle to update your availability status</span>
+            </div>
+          </div>
+
+          <!-- Edit Profile Card -->
+          <div class="card mt-xl" id="edit-profile" style="margin-top:var(--space-xl);">
+            <div class="card-header"><h3 class="card-title">✏️ Edit Profile</h3></div>
+            <form id="edit-form">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="edit-name" class="form-control" value="${user.name}" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" id="edit-phone" class="form-control" value="${user.phone || ''}" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">City</label>
+                  <input type="text" id="edit-city" class="form-control" value="${user.location?.city || ''}" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">State</label>
+                  <input type="text" id="edit-state" class="form-control" value="${user.location?.state || ''}" />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full" id="save-btn">
+                <span class="btn-text">Save Changes</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Column: Donation History -->
+        <div>
+          <div class="section-header">
+            <h2 class="section-title">Donation <span>History</span></h2>
+          </div>
+          ${history.length === 0
+                        ? `<div class="empty-state">
+                <div class="empty-state-icon">🩸</div>
+                <h3>No Donations Yet</h3>
+                <p>Your donation history will appear here after your first donation.</p>
+                <a href="search.html" class="btn btn-outline mt-md" style="margin-top:var(--space-md);">View Open Requests</a>
+              </div>`
+                        : `<div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Patient / Request</th>
+                      <th>Hospital</th>
+                      <th>Units</th>
+                      <th>Status</th>
+                      <th>Certificate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${history.map(h => `
+                      <tr>
+                        <td>${formatDate(h.donationDate)}</td>
+                        <td>${h.request?.patientName || 'Walk-in Donation'}</td>
+                        <td>${h.hospital?.name || '—'}</td>
+                        <td>${h.unitsDoanted || 1}</td>
+                        <td>${statusBadgeHtml(h.status)}</td>
+                        <td>${h.certificateId ? `<span style="font-size:0.75rem;color:var(--color-success);">${h.certificateId}</span>` : '—'}</td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>`
+                    }
+        </div>
+      </div>
+    `;
+
+                // Edit form handler
+                document.getElementById('edit-form')?.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const btn = document.getElementById('save-btn');
+                    setButtonLoading(btn, true);
+                    try {
+                        await API.donors.update(user._id, {
+                            name: document.getElementById('edit-name').value,
+                            phone: document.getElementById('edit-phone').value,
+                            city: document.getElementById('edit-city').value,
+                            state: document.getElementById('edit-state').value,
+                        });
+                        showToast('Profile updated successfully!', 'success');
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    } finally {
+                        setButtonLoading(btn, false);
+                    }
+                });
+
+            } catch (err) {
+                if (err.status === 401) { Auth.logout(); return; }
+                document.getElementById('dashboard-wrapper').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⚡</div>
+        <h3>Could not load dashboard</h3>
+        <p>${err.message}</p>
+        <a href="login.html" class="btn btn-primary mt-md" style="margin-top:var(--space-md);">Login Again</a>
+      </div>`;
+            }
+        }
+
+        async function toggleAvailability(checkbox) {
+            const user = Auth.getUser();
+            try {
+                const res = await API.donors.setAvailability(user._id, checkbox.checked);
+                const label = document.getElementById('avail-label');
+                if (label) label.textContent = checkbox.checked ? 'Available to Donate' : 'Currently Unavailable';
+                showToast(`Availability set to: ${checkbox.checked ? 'Available ✅' : 'Unavailable ⏸️'}`, 'success');
+            } catch (err) {
+                checkbox.checked = !checkbox.checked; // Revert
+                showToast(err.message, 'error');
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

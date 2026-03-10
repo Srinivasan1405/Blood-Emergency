@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register as Blood Donor — Blood Emergency</title>
+    <meta name="description"
+        content="Register as a blood donor on Blood Emergency Website. Help save lives in your city." />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <div class="auth-page" style="align-items:flex-start;padding:var(--space-3xl) var(--space-xl);">
+        <div class="auth-card slide-up" style="max-width:560px;width:100%;margin:auto;">
+            <div class="auth-logo" style="margin-bottom:var(--space-xl);">
+                <div class="logo-icon">🩸</div>
+                <h1>Become a Blood Donor</h1>
+                <p>Register today. Save a life tomorrow.</p>
+            </div>
+
+            <form id="register-form" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="name" class="form-control" placeholder="John Doe" required
+                            autocomplete="name" />
+                        <span class="form-error" id="name-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bloodGroup">Blood Group <span class="required">*</span></label>
+                        <select id="bloodGroup" class="form-control" required>
+                            <option value="">Select Blood Group</option>
+                            <option>A+</option>
+                            <option>A-</option>
+                            <option>B+</option>
+                            <option>B-</option>
+                            <option>AB+</option>
+                            <option>AB-</option>
+                            <option>O+</option>
+                            <option>O-</option>
+                        </select>
+                        <span class="form-error" id="bloodGroup-error"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" class="form-control" placeholder="you@example.com" required
+                        autocomplete="email" />
+                    <span class="form-error" id="email-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-control" placeholder="+91 98765 43210"
+                        autocomplete="tel" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="city">City <span class="required">*</span></label>
+                        <input type="text" id="city" class="form-control" placeholder="Mumbai" required />
+                        <span class="form-error" id="city-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="state">State</label>
+                        <input type="text" id="state" class="form-control" placeholder="Maharashtra" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password <span class="required">*</span></label>
+                        <input type="password" id="password" class="form-control" placeholder="Min. 6 characters"
+                            required autocomplete="new-password" />
+                        <span class="form-error" id="password-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirm Password <span
+                                class="required">*</span></label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Repeat password"
+                            required autocomplete="new-password" />
+                        <span class="form-error" id="confirmPassword-error"></span>
+                    </div>
+                </div>
+
+                <!-- Password strength indicator -->
+                <div class="form-group" style="margin-top:-8px;">
+                    <div id="pwd-strength-bar"
+                        style="height:3px;background:var(--color-border);border-radius:2px;transition:all 0.3s;">
+                        <div id="pwd-strength-fill"
+                            style="height:100%;width:0;border-radius:2px;transition:width 0.3s;"></div>
+                    </div>
+                    <span id="pwd-strength-label" style="font-size:0.75rem;color:var(--text-muted);"></span>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+                        <input type="checkbox" id="consent"
+                            style="margin-top:3px;accent-color:var(--red-600);flex-shrink:0;" required />
+                        <span style="font-size:0.85rem;color:var(--text-secondary);">
+                            I agree to be contacted when blood of my type is urgently needed. I understand my contact
+                            information will be shared with medical staff only.
+                        </span>
+                    </label>
+                    <span class="form-error" id="consent-error"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn">
+                    <span class="btn-text">🩸 Register as Donor</span>
+                </button>
+            </form>
+
+            <div class="auth-switch">Already have an account? <a href="login.html">Login here</a></div>
+            <div class="auth-switch mt-sm"><a href="index.html" style="color:var(--text-muted);">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (Auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+        // Password strength indicator
+        document.getElementById('password').addEventListener('input', function () {
+            const val = this.value;
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 10) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            const fill = document.getElementById('pwd-strength-fill');
+            const label = document.getElementById('pwd-strength-label');
+            const levels = [
+                { pct: '0%', color: 'transparent', text: '' },
+                { pct: '25%', color: 'var(--color-critical)', text: 'Weak' },
+                { pct: '50%', color: 'var(--color-warning)', text: 'Fair' },
+                { pct: '75%', color: 'var(--color-warning)', text: 'Good' },
+                { pct: '90%', color: 'var(--color-success)', text: 'Strong' },
+                { pct: '100%', color: 'var(--color-success)', text: 'Very Strong' },
+            ];
+            const lvl = levels[Math.min(score, 5)];
+            fill.style.width = lvl.pct;
+            fill.style.background = lvl.color;
+            label.textContent = lvl.text;
+            label.style.color = lvl.color;
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearErrors();
+
+            const fields = {
+                name: { el: document.getElementById('name'), msg: 'Full name is required' },
+                bloodGroup: { el: document.getElementById('bloodGroup'), msg: 'Blood group is required' },
+                email: { el: document.getElementById('email'), msg: 'Email is required' },
+                city: { el: document.getElementById('city'), msg: 'City is required' },
+                password: { el: document.getElementById('password'), msg: 'Password is required (min 6 chars)' },
+            };
+
+            let valid = true;
+            for (const [id, f] of Object.entries(fields)) {
+                if (!f.el.value.trim()) {
+                    showFieldError(id, f.msg);
+                    valid = false;
+                }
+            }
+
+            const pwd = document.getElementById('password').value;
+            const cpwd = document.getElementById('confirmPassword').value;
+            if (pwd && pwd.length < 6) { showFieldError('password', 'Password must be at least 6 characters'); valid = false; }
+            if (pwd !== cpwd) { showFieldError('confirmPassword', 'Passwords do not match'); valid = false; }
+            if (!document.getElementById('consent').checked) { showFieldError('consent', 'You must agree to the terms'); valid = false; }
+            if (!valid) return;
+
+            const btn = document.getElementById('submit-btn');
+            setButtonLoading(btn, true);
+
+            try {
+                const res = await API.auth.register({
+                    name: document.getElementById('name').value.trim(),
+                    bloodGroup: document.getElementById('bloodGroup').value,
+                    email: document.getElementById('email').value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    city: document.getElementById('city').value.trim(),
+                    state: document.getElementById('state').value.trim(),
+                    password: pwd,
+                });
+                Auth.setToken(res.token);
+                Auth.setUser(res.user);
+                showToast('Registration successful! Welcome to Blood Emergency!', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 1000);
+            } catch (err) {
+                showToast(err.message, 'error', 'Registration Failed');
+                setButtonLoading(btn, false);
+            }
+        });
+
+        function showFieldError(id, msg) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('error');
+            const errEl = document.getElementById(`${id}-error`);
+            if (errEl) errEl.textContent = msg;
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+        }
+    </script>
+</body>
+
+</html>
